@@ -2,40 +2,26 @@
 <!--
   Modder Tools — sitemap.xml
 
-  Replace https://example.com with your real domain everywhere below.
+  index.html is a single-page app that routes app-details views client-side
+  via a URL hash (#/app-details?id=123). Search engines generally do not treat
+  URL fragments (#...) as separate crawlable/indexable pages, since the
+  fragment is never sent to the server — so individual app pages are NOT
+  listed here, and listing them would not help indexing.
 
-  Because index.html is a single-page app that routes app-details/app-download
-  views client-side via a URL hash (#/app-details?id=123) rather than separate
-  server-rendered pages, this file lists the home page plus placeholder <url>
-  blocks showing the pattern to repeat for every published app.
+  Only the home page is listed below, which is what Google will actually
+  crawl, render, and index.
 
-  IMPORTANT SEO CAVEAT: most crawlers do not fetch content behind a #hash, so
-  listing hash URLs here has limited indexing value on its own. For app pages
-  to actually rank, generate this file dynamically (e.g. a small script or
-  Cloud Function that reads /apps from Firebase whenever an app is published)
-  AND consider adding lightweight server-side rendering or prerendering
-  (a static snapshot per app, or a redirect service) for the app-details URLs
-  so crawlers see real content rather than an empty shell.
+  If you want individual app/tool pages to rank on Google (e.g. someone
+  searching the exact app name), the durable fix is to move app-details off
+  hash routing onto real paths (e.g. /app/{id}) using the History API, with a
+  Vercel rewrite so every path serves index.html. Ask if you want this built.
 -->
-<urlset xmlns="http://www.sitemap.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <!-- Home -->
   <url>
     <loc>https://moddertools.vercel.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-  </url>
-
-  <!-- ============================================================
-       Repeat one <url> block per PUBLISHED app/tool, in this shape.
-       id = the Firebase key of the app (apps/{appId}).
-       Update <lastmod> to the app's updatedAt whenever it changes.
-       ============================================================ -->
-  <url>
-    <loc>https://moddertools.vercel.app/#/app-details?id=bin.mt.plus</loc>
-    <lastmod>2026-01-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
   </url>
 
 </urlset>
