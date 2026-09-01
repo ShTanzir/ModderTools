@@ -1,0 +1,9 @@
+# Modder Tools — robots.txt
+# Replace https://example.com with your real domain.
+
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin
+
+Sitemap: https://moddertools.vercel.app/sitemap.xml

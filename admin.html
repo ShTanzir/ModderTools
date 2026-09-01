@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modder Tools — Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   CONFIGURATION / DESIGN TOKENS  (same system as index.html)
+   ========================================================================== */
+:root{
+  --bg:#FFFFFF; --ink:#000000; --ink-soft:rgba(0,0,0,.62); --ink-faint:rgba(0,0,0,.38);
+  --line:rgba(0,0,0,.12); --line-soft:rgba(0,0,0,.07);
+  --accent:#ACE32E; --accent-ink:#3f5c02;
+  --surface:#FAFAF9; --danger:#D64545; --danger-bg:#FDECEC;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.06), 0 1px 1px rgba(0,0,0,.04);
+  --shadow-md:0 8px 24px rgba(0,0,0,.09); --shadow-lg:0 20px 48px rgba(0,0,0,.16);
+  --radius-sm:10px; --radius-md:14px; --radius-lg:20px;
+  --font-display:'Space Grotesk', system-ui, sans-serif;
+  --font-body:'Inter', system-ui, sans-serif;
+  --font-mono:'JetBrains Mono', ui-monospace, monospace;
+  --ease:cubic-bezier(.22,.8,.28,1);
+  --sidebar-w:230px;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--surface); color:var(--ink); font-family:var(--font-body); -webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:-.01em;}
+.mono{font-family:var(--font-mono);}
+a{color:inherit;}
+button{font:inherit; cursor:pointer;}
+:focus-visible{outline:2.5px solid var(--accent); outline-offset:2px; border-radius:4px;}
+input,textarea,select{font:inherit; color:var(--ink);}
+::placeholder{color:var(--ink-faint);}
+
+/* ---------- Login ---------- */
+.login-screen{
+  min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg);
+  padding:20px;
+}
+.login-card{
+  width:100%; max-width:360px; border:1px solid var(--line-soft); border-radius:var(--radius-lg);
+  padding:34px 28px; box-shadow:var(--shadow-md); background:#fff;
+}
+.login-card .brand{display:flex; align-items:center; gap:8px; margin-bottom:22px; font-family:var(--font-display); font-weight:700; font-size:18px;}
+.login-card .brand .dot{color:var(--accent-ink); background:var(--accent); padding:0 4px; border-radius:4px;}
+.login-card h1{font-size:17px; margin-bottom:4px;}
+.login-card p{font-size:13px; color:var(--ink-faint); margin:0 0 20px;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; font-weight:600; margin-bottom:6px; color:var(--ink-soft);}
+.field input, .field select, .field textarea{
+  width:100%; border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-size:14px;
+  background:var(--surface); transition:border-color .15s var(--ease);
+}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--accent); background:#fff;}
+.field textarea{resize:vertical; min-height:110px; font-family:var(--font-body);}
+.field.mono-field input, .field.mono-field textarea{font-family:var(--font-mono); font-size:13px;}
+.btn{
+  border:none; border-radius:11px; padding:11px 18px; font-size:13.5px; font-weight:600;
+  display:inline-flex; align-items:center; justify-content:center; gap:7px; transition:transform .15s var(--ease), background .15s, opacity .15s;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn:disabled{opacity:.5; pointer-events:none;}
+.btn-primary{background:var(--ink); color:#fff; width:100%;}
+.btn-accent{background:var(--accent); color:var(--accent-ink);}
+.btn-ghost{background:transparent; border:1.5px solid var(--line); color:var(--ink-soft);}
+.btn-ghost:hover{border-color:var(--accent); color:var(--ink);}
+.btn-danger{background:var(--danger-bg); color:var(--danger);}
+.btn-sm{padding:7px 12px; font-size:12.5px; border-radius:9px;}
+.err-text{color:var(--danger); font-size:12.5px; margin-top:10px; display:none;}
+.err-text.show{display:block;}
+.spinner{width:15px; height:15px; border-radius:50%; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner.dark{border:2px solid var(--line); border-top-color:var(--accent-ink);}
+
+/* ---------- App shell ---------- */
+.admin-shell{display:none; min-height:100vh;}
+.admin-shell.active{display:flex;}
+.sidebar{
+  width:var(--sidebar-w); flex-shrink:0; background:#fff; border-right:1px solid var(--line-soft);
+  display:flex; flex-direction:column; position:sticky; top:0; height:100vh; padding:20px 14px;
+}
+.sidebar .brand{display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-weight:700; font-size:16px; padding:0 8px 22px;}
+.sidebar .brand .dot{color:var(--accent-ink); background:var(--accent); padding:0 4px; border-radius:4px;}
+.nav-item{
+  display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:13.5px;
+  font-weight:500; color:var(--ink-soft); margin-bottom:2px; border:none; background:transparent; width:100%; text-align:left;
+}
+.nav-item:hover{background:var(--surface); color:var(--ink);}
+.nav-item.active{background:var(--ink); color:#fff;}
+.nav-item svg{flex-shrink:0;}
+.sidebar-foot{margin-top:auto; padding-top:14px; border-top:1px solid var(--line-soft);}
+
+.main-area{flex:1; min-width:0; padding:26px 32px 60px;}
+.topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+.topbar h1{font-size:20px;}
+.topbar .sub{font-size:12.5px; color:var(--ink-faint); margin-top:3px;}
+
+.panel{display:none;}
+.panel.active{display:block; animation:fadein .2s var(--ease);}
+@keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+/* ---------- Dashboard ---------- */
+.stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:26px;}
+.stat-card{background:#fff; border:1px solid var(--line-soft); border-radius:var(--radius-md); padding:16px 18px; box-shadow:var(--shadow-sm);}
+.stat-card .st-label{font-size:11.5px; color:var(--ink-faint); margin-bottom:6px;}
+.stat-card .st-value{font-family:var(--font-mono); font-size:24px; font-weight:600;}
+
+.quick-actions{display:flex; gap:10px; margin-bottom:26px; flex-wrap:wrap;}
+
+.two-col{display:grid; grid-template-columns:1.1fr .9fr; gap:20px;}
+@media (max-width:980px){ .two-col{grid-template-columns:1fr;} }
+
+.card{background:#fff; border:1px solid var(--line-soft); border-radius:var(--radius-md); padding:18px; box-shadow:var(--shadow-sm); margin-bottom:18px;}
+.card h3{font-size:14.5px; margin-bottom:12px;}
+.list-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13px;}
+.list-row:last-child{border-bottom:none;}
+.list-row .lr-main{display:flex; align-items:center; gap:10px; min-width:0;}
+.list-row img{width:32px; height:32px; border-radius:8px; object-fit:cover; background:var(--surface); flex-shrink:0;}
+.list-row .lr-name{font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.list-row .lr-meta{color:var(--ink-faint); font-size:11.5px; font-family:var(--font-mono); flex-shrink:0;}
+.empty-note{color:var(--ink-faint); font-size:12.5px; padding:8px 0;}
+
+.badge{display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:600;}
+.badge.draft{background:#FFF3D6; color:#8a6100;}
+.badge.published{background:rgba(172,227,46,.25); color:var(--accent-ink);}
+
+/* ---------- Table / list views ---------- */
+.toolbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap;}
+.toolbar .filters{display:flex; gap:8px; flex-wrap:wrap;}
+.pill-filter{border:1.5px solid var(--line); border-radius:999px; padding:7px 14px; font-size:12.5px; background:#fff; color:var(--ink-soft);}
+.pill-filter.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+.search-mini{position:relative; width:240px;}
+.search-mini input{width:100%; height:38px; border:1.5px solid var(--line); border-radius:10px; padding:0 12px; font-size:13px; background:#fff;}
+
+.data-table{width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line-soft); border-radius:var(--radius-md); overflow:hidden;}
+.data-table th{text-align:left; font-size:11px; text-transform:none; color:var(--ink-faint); padding:12px 14px; background:var(--surface); border-bottom:1px solid var(--line-soft); font-weight:600;}
+.data-table td{padding:11px 14px; border-bottom:1px solid var(--line-soft); font-size:13px; vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table .name-cell{display:flex; align-items:center; gap:10px;}
+.data-table .name-cell img{width:34px; height:34px; border-radius:9px; object-fit:cover; background:var(--surface);}
+.row-actions{display:flex; gap:6px;}
+.icon-btn{width:30px; height:30px; border-radius:8px; border:1px solid var(--line-soft); background:#fff; display:flex; align-items:center; justify-content:center; color:var(--ink-soft);}
+.icon-btn:hover{border-color:var(--accent); color:var(--ink);}
+.icon-btn.danger:hover{border-color:var(--danger); color:var(--danger);}
+
+/* ---------- Forms ---------- */
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+@media (max-width:760px){ .form-grid{grid-template-columns:1fr;} }
+.form-grid .full{grid-column:1/-1;}
+.section-title{font-size:13px; font-weight:700; margin:22px 0 12px; padding-top:16px; border-top:1px solid var(--line-soft); display:flex; align-items:center; gap:8px;}
+.section-title:first-of-type{border-top:none; margin-top:0; padding-top:0;}
+.repeat-row{display:flex; gap:8px; margin-bottom:8px;}
+.repeat-row input{flex:1;}
+.chip-toggle-row{display:flex; flex-wrap:wrap; gap:8px;}
+.chip-toggle{border:1.5px solid var(--line); border-radius:999px; padding:8px 14px; font-size:12.5px; background:#fff; color:var(--ink-soft);}
+.chip-toggle.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+.perm-tag-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;}
+.perm-tag{display:flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:12px; background:var(--surface);}
+.perm-tag button{border:none; background:none; color:var(--ink-faint); display:flex;}
+.toggle-row{display:flex; align-items:center; gap:10px;}
+.switch{position:relative; width:42px; height:24px; flex-shrink:0;}
+.switch input{opacity:0; width:0; height:0;}
+.switch .track{position:absolute; inset:0; background:var(--line); border-radius:999px; transition:background .15s;}
+.switch .track::after{content:''; position:absolute; width:18px; height:18px; border-radius:50%; background:#fff; top:3px; left:3px; transition:transform .15s var(--ease); box-shadow:var(--shadow-sm);}
+.switch input:checked + .track{background:var(--accent);}
+.switch input:checked + .track::after{transform:translateX(18px);}
+.form-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:26px; padding-top:18px; border-top:1px solid var(--line-soft);}
+.field-hint{font-size:11px; color:var(--ink-faint); margin-top:5px;}
+.field-err{font-size:11.5px; color:var(--danger); margin-top:5px; display:none;}
+.field.invalid input, .field.invalid textarea{border-color:var(--danger);}
+.field.invalid .field-err{display:block;}
+
+/* ---------- Banner/category cards ---------- */
+.reorder-list{display:flex; flex-direction:column; gap:8px;}
+.reorder-item{
+  display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--line-soft);
+  border-radius:var(--radius-sm); padding:10px 12px;
+}
+.reorder-item .drag-handle{color:var(--ink-faint); cursor:grab; flex-shrink:0;}
+.reorder-item.dragging{opacity:.4;}
+.reorder-item img{width:60px; height:26px; border-radius:6px; object-fit:cover; background:var(--surface); flex-shrink:0;}
+.reorder-item .ri-main{flex:1; min-width:0;}
+.reorder-item .ri-title{font-weight:600; font-size:13px;}
+.reorder-item .ri-sub{font-size:11px; color:var(--ink-faint); font-family:var(--font-mono);}
+
+/* ---------- Toast / modal ---------- */
+.toast{
+  position:fixed; bottom:22px; left:50%; transform:translate(-50%,140%); background:var(--ink); color:#fff;
+  padding:12px 20px; border-radius:11px; font-size:13px; box-shadow:var(--shadow-lg); z-index:200; transition:transform .3s var(--ease);
+  display:flex; align-items:center; gap:9px;
+}
+.toast.show{transform:translate(-50%,0);}
+.toast.danger{background:var(--danger);}
+
+.modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:150; padding:20px;}
+.modal-backdrop.show{display:flex;}
+.modal-card{background:#fff; border-radius:var(--radius-lg); padding:24px; max-width:400px; width:100%; box-shadow:var(--shadow-lg);}
+.modal-card h3{font-size:16px; margin-bottom:8px;}
+.modal-card p{font-size:13.5px; color:var(--ink-soft); margin:0 0 20px;}
+.modal-actions{display:flex; gap:10px; justify-content:flex-end;}
+
+.empty-panel{text-align:center; padding:60px 20px; color:var(--ink-faint);}
+.empty-panel .ep-title{font-family:var(--font-display); font-weight:600; color:var(--ink); font-size:15px; margin-bottom:6px;}
+
+@media (max-width:820px){
+  .sidebar{position:fixed; z-index:60; transform:translateX(-100%); transition:transform .2s var(--ease); box-shadow:var(--shadow-lg);}
+  .sidebar.open{transform:translateX(0);}
+  .main-area{padding:20px 16px 60px;}
+  .mobile-topbar{display:flex !important;}
+}
+.mobile-topbar{display:none; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line-soft); background:#fff; position:sticky; top:0; z-index:50;}
+.mobile-topbar button{background:none; border:1px solid var(--line-soft); border-radius:9px; width:36px; height:36px; display:flex; align-items:center; justify-content:center;}
+</style>
+</head>
+<body>
+
+<!-- ============================== LOGIN ============================== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="brand">Modder<span class="dot">Tools</span></div>
+    <h1>Admin access</h1>
+    <p>Enter your Access Key to manage apps, categories and banners.</p>
+    <div class="field">
+      <label for="accessKeyInput">Access Key</label>
+      <input type="password" id="accessKeyInput" autocomplete="off" placeholder="••••••••••">
+    </div>
+    <button class="btn btn-primary" id="loginBtn"><span id="loginBtnLabel">Log in</span></button>
+    <div class="err-text" id="loginErr">Incorrect Access Key. Please try again.</div>
+  </div>
+</div>
+
+<!-- ============================== APP SHELL ============================== -->
+<div class="admin-shell" id="adminShell">
+  <div class="mobile-topbar">
+    <button id="sidebarToggle" aria-label="Toggle menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <strong style="font-family:var(--font-display)">Modder Tools Admin</strong>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">Modder<span class="dot">Tools</span></div>
+    <nav id="navList">
+      <button class="nav-item" data-panel="dashboard">${'' /* placeholder replaced by JS-rendered nav below */}</button>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="nav-item" id="logoutBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log out
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <!-- ---------------- DASHBOARD ---------------- -->
+    <section class="panel" id="panel-dashboard">
+      <div class="topbar">
+        <div><h1>Dashboard</h1><div class="sub">Overview of your Modder Tools directory</div></div>
+      </div>
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="quick-actions">
+        <button class="btn btn-accent" data-goto="apps/new">+ Add New App / Tool</button>
+        <button class="btn btn-ghost" data-goto="categories">+ Create Category</button>
+        <button class="btn btn-ghost" data-goto="banners/new">+ Add Banner</button>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <h3>Draft apps</h3>
+            <div id="draftList"></div>
+          </div>
+          <div class="card">
+            <h3>Most downloaded</h3>
+            <div id="mostDownloadedList"></div>
+          </div>
+          <div class="card">
+            <h3>Low download apps</h3>
+            <div id="lowDownloadList"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>Recently added</h3>
+            <div id="recentAddedList"></div>
+          </div>
+          <div class="card">
+            <h3>Recently updated</h3>
+            <div id="recentUpdatedList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- APPS LIST ---------------- -->
+    <section class="panel" id="panel-apps">
+      <div class="topbar">
+        <div><h1>Apps &amp; Tools</h1><div class="sub" id="appsCountSub"></div></div>
+        <button class="btn btn-accent" data-goto="apps/new">+ Add New App / Tool</button>
+      </div>
+      <div class="toolbar">
+        <div class="filters" id="appsStatusFilter">
+          <button class="pill-filter active" data-status="">All</button>
+          <button class="pill-filter" data-status="published">Published</button>
+          <button class="pill-filter" data-status="draft">Draft</button>
+        </div>
+        <div class="search-mini"><input type="search" id="appsSearchInput" placeholder="Search apps…"></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>App</th><th>Version</th><th>Status</th><th>Downloads</th><th>Updated</th><th></th></tr></thead>
+          <tbody id="appsTableBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-panel" id="appsEmptyPanel" style="display:none;">
+        <div class="ep-title">No apps yet</div>
+        <button class="btn btn-accent" data-goto="apps/new" style="margin-top:10px;">+ Add your first app</button>
+      </div>
+    </section>
+
+    <!-- ---------------- APP FORM (add/edit) ---------------- -->
+    <section class="panel" id="panel-app-form">
+      <div class="topbar">
+        <div><h1 id="appFormTitle">Add App / Tool</h1><div class="sub">Fields marked with a red border on submit are required.</div></div>
+      </div>
+      <div class="card">
+        <form id="appForm">
+          <div class="section-title">Basic information</div>
+          <div class="form-grid">
+            <div class="field" data-field="name"><label>App Name *</label><input type="text" id="f_name"><div class="field-err">App name is required.</div></div>
+            <div class="field mono-field" data-field="packageName"><label>Package Name</label><input type="text" id="f_packageName" placeholder="com.example.app"></div>
+            <div class="field mono-field"><label>Version Code</label><input type="text" id="f_versionCode" placeholder="21"></div>
+            <div class="field"><label>Version Name</label><input type="text" id="f_versionName" placeholder="v3.2.1"></div>
+          </div>
+
+          <div class="section-title">Media URLs</div>
+          <div class="form-grid">
+            <div class="field" data-field="logo"><label>App Logo URL *</label><input type="url" id="f_logo" placeholder="https://…"><div class="field-err">A valid logo URL is required.</div></div>
+            <div class="field"><label>Cover Image URL</label><input type="url" id="f_cover" placeholder="https://…"></div>
+          </div>
+          <div class="field full">
+            <label>Screenshots</label>
+            <div id="screenshotsList"></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="addScreenshotBtn">+ Add screenshot URL</button>
+          </div>
+
+          <div class="section-title">File information</div>
+          <div class="form-grid">
+            <div class="field full" data-field="downloadLink"><label>App Download Link *</label><input type="url" id="f_downloadLink" placeholder="https://…"><div class="field-err">A valid download link is required.</div></div>
+            <div class="field"><label>File Size</label><input type="text" id="f_size" placeholder="25 MB"></div>
+            <div class="field"><label>Android Required Version</label><input type="text" id="f_androidVersion" placeholder="Android 8.0+"></div>
+          </div>
+
+          <div class="section-title">Categories</div>
+          <div class="chip-toggle-row" id="categoryToggleRow"></div>
+
+          <div class="section-title">Rating &amp; statistics</div>
+          <div class="form-grid">
+            <div class="field" data-field="rating"><label>Rating (0–5)</label><input type="number" min="0" max="5" step="0.1" id="f_rating"><div class="field-err">Rating must be between 0 and 5.</div></div>
+            <div class="field" data-field="downloadCount"><label>Initial Download Count</label><input type="number" min="0" step="1" id="f_downloadCount"><div class="field-err">Must be a whole number ≥ 0.</div></div>
+          </div>
+
+          <div class="section-title">Description</div>
+          <div class="field full"><label>Description (plain text, HTML or Markdown)</label><textarea id="f_description" style="min-height:160px;"></textarea></div>
+
+          <div class="section-title">Permissions</div>
+          <div class="perm-tag-row" id="permTagRow"></div>
+          <div class="repeat-row" style="max-width:340px;">
+            <input type="text" id="permInput" placeholder="e.g. Camera">
+            <button type="button" class="btn btn-ghost btn-sm" id="addPermBtn">Add</button>
+          </div>
+
+          <div class="section-title">Additional information</div>
+          <div class="form-grid">
+            <div class="field"><label>Ads Available</label><div class="toggle-row"><label class="switch"><input type="checkbox" id="f_ads"><span class="track"></span></label><span id="adsLabel">No</span></div></div>
+            <div class="field"><label>In-App Purchases</label><div class="toggle-row"><label class="switch"><input type="checkbox" id="f_iap"><span class="track"></span></label><span id="iapLabel">No</span></div></div>
+          </div>
+
+          <div class="section-title">Developer contact</div>
+          <div class="form-grid">
+            <div class="field"><label>Telegram</label><input type="text" id="f_devTelegram" placeholder="@username"></div>
+            <div class="field"><label>Email</label><input type="email" id="f_devEmail"></div>
+            <div class="field full"><label>Website</label><input type="url" id="f_devWebsite" placeholder="https://…"></div>
+          </div>
+
+          <div class="section-title">Social links <button type="button" class="btn btn-ghost btn-sm" id="useDefaultSocialsBtn" style="margin-left:auto;">Use saved defaults</button></div>
+          <div class="form-grid">
+            <div class="field"><label>Facebook</label><input type="url" id="f_socFacebook"></div>
+            <div class="field"><label>Telegram</label><input type="text" id="f_socTelegram"></div>
+            <div class="field"><label>YouTube</label><input type="url" id="f_socYoutube"></div>
+            <div class="field"><label>Instagram</label><input type="url" id="f_socInstagram"></div>
+            <div class="field full"><label>Website</label><input type="url" id="f_socWebsite"></div>
+          </div>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-soft); margin-top:4px;">
+            <input type="checkbox" id="f_saveAsDefaultSocials"> Save these as the reusable default social links
+          </label>
+
+          <div class="section-title">SEO</div>
+          <div class="form-grid">
+            <div class="field"><label>SEO Title</label><input type="text" id="f_seoTitle"></div>
+            <div class="field"><label>SEO Description</label><input type="text" id="f_seoDescription"></div>
+          </div>
+
+          <div class="section-title">Search keywords</div>
+          <div class="field full"><label>Keywords (comma-separated)</label><input type="text" id="f_keywords" placeholder="apk editor, apktool, smali, android modding"></div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" data-goto="apps">Cancel</button>
+            <button type="button" class="btn btn-ghost" id="saveDraftBtn">Save Draft</button>
+            <button type="button" class="btn btn-accent" id="publishBtn">Publish</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ---------------- CATEGORIES ---------------- -->
+    <section class="panel" id="panel-categories">
+      <div class="topbar"><div><h1>Categories</h1><div class="sub">Drag to reorder — order controls chip position on the public site.</div></div></div>
+      <div class="card">
+        <h3>Create category</h3>
+        <div class="repeat-row" style="max-width:420px;">
+          <input type="text" id="newCategoryInput" placeholder="Category name">
+          <button class="btn btn-accent btn-sm" id="addCategoryBtn">Create</button>
+        </div>
+      </div>
+      <div class="reorder-list" id="categoryReorderList"></div>
+      <div class="empty-panel" id="categoriesEmptyPanel" style="display:none;">
+        <div class="ep-title">No categories yet</div>
+      </div>
+    </section>
+
+    <!-- ---------------- BANNERS ---------------- -->
+    <section class="panel" id="panel-banners">
+      <div class="topbar">
+        <div><h1>Banners</h1><div class="sub">Only active banners appear on the homepage slider.</div></div>
+        <button class="btn btn-accent" data-goto="banners/new">+ Add Banner</button>
+      </div>
+      <div class="reorder-list" id="bannerReorderList"></div>
+      <div class="empty-panel" id="bannersEmptyPanel" style="display:none;">
+        <div class="ep-title">No banners yet</div>
+        <button class="btn btn-accent" data-goto="banners/new" style="margin-top:10px;">+ Add your first banner</button>
+      </div>
+    </section>
+
+    <!-- ---------------- BANNER FORM ---------------- -->
+    <section class="panel" id="panel-banner-form">
+      <div class="topbar"><div><h1 id="bannerFormTitle">Add Banner</h1></div></div>
+      <div class="card">
+        <form id="bannerForm">
+          <div class="form-grid">
+            <div class="field full" data-field="image"><label>Banner Image URL *</label><input type="url" id="b_image"><div class="field-err">A valid image URL is required.</div></div>
+            <div class="field"><label>Button Text</label><input type="text" id="b_buttonText" placeholder="Download now"></div>
+            <div class="field"><label>Short Details</label><input type="text" id="b_shortDetails"></div>
+          </div>
+          <div class="section-title">Destination</div>
+          <div class="chip-toggle-row" style="margin-bottom:12px;">
+            <button type="button" class="chip-toggle active" data-dest="app">Uploaded app</button>
+            <button type="button" class="chip-toggle" data-dest="category">Category</button>
+            <button type="button" class="chip-toggle" data-dest="external">External URL</button>
+          </div>
+          <div class="form-grid">
+            <div class="field full" id="destAppField"><label>Select App</label><select id="b_appId"></select></div>
+            <div class="field full" id="destCategoryField" style="display:none;"><label>Select Category</label><select id="b_categoryId"></select></div>
+            <div class="field full" id="destExternalField" style="display:none;"><label>External URL</label><input type="url" id="b_externalUrl" placeholder="https://…"></div>
+          </div>
+          <div class="section-title">Status</div>
+          <div class="toggle-row"><label class="switch"><input type="checkbox" id="b_active" checked><span class="track"></span></label><span id="bannerActiveLabel">Active</span></div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" data-goto="banners">Cancel</button>
+            <button type="button" class="btn btn-accent" id="saveBannerBtn">Save Banner</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ---------------- ADS CONTROL ---------------- -->
+    <section class="panel" id="panel-ads">
+      <div class="topbar"><div><h1>Ads Control</h1><div class="sub">Structural foundation for ad configuration — no provider is wired up yet.</div></div></div>
+      <div class="card">
+        <h3>Ad slots</h3>
+        <div class="form-grid">
+          <div class="field"><label>Home banner ads</label><div class="toggle-row"><label class="switch"><input type="checkbox" id="ad_home"><span class="track"></span></label><span id="adHomeLabel">Off</span></div></div>
+          <div class="field"><label>App-details ads</label><div class="toggle-row"><label class="switch"><input type="checkbox" id="ad_details"><span class="track"></span></label><span id="adDetailsLabel">Off</span></div></div>
+          <div class="field"><label>Download-page ads</label><div class="toggle-row"><label class="switch"><input type="checkbox" id="ad_download"><span class="track"></span></label><span id="adDownloadLabel">Off</span></div></div>
+          <div class="field full"><label>Ad provider notes</label><textarea id="ad_notes" style="min-height:90px;" placeholder="No provider configured yet — record integration notes here."></textarea></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-accent" id="saveAdsBtn">Save</button></div>
+      </div>
+    </section>
+
+    <!-- ---------------- SETTINGS ---------------- -->
+    <section class="panel" id="panel-settings">
+      <div class="topbar"><div><h1>Settings</h1></div></div>
+      <div class="card">
+        <h3>Site settings</h3>
+        <div class="form-grid">
+          <div class="field"><label>Site Name</label><input type="text" id="s_siteName" placeholder="Modder Tools"></div>
+          <div class="field"><label>Logo URL</label><input type="url" id="s_logoUrl"></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-accent" id="saveSiteSettingsBtn">Save</button></div>
+      </div>
+      <div class="card">
+        <h3>Access Key</h3>
+        <div class="form-grid">
+          <div class="field"><label>Current Access Key</label>
+            <div style="display:flex; gap:8px;">
+              <input type="password" id="s_currentKeyView" readonly style="flex:1;">
+              <button type="button" class="btn btn-ghost btn-sm" id="toggleKeyVisBtn">Show</button>
+            </div>
+          </div>
+          <div class="field"><label>New Access Key</label><input type="password" id="s_newKey"></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-accent" id="changeKeyBtn">Change Access Key</button></div>
+      </div>
+      <div class="card">
+        <h3>Backup</h3>
+        <p style="font-size:13px; color:var(--ink-soft); margin:0 0 14px;">Export a full backup of apps, categories, banners and settings, or import a previously exported file.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-accent" id="exportBackupBtn">Export Full Backup</button>
+          <label class="btn btn-ghost" style="cursor:pointer;">
+            Import Backup
+            <input type="file" id="importBackupInput" accept="application/json" style="display:none;">
+          </label>
+        </div>
+        <div class="field-hint" id="backupStatus" style="margin-top:10px;"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============================== TOAST ============================== -->
+<div class="toast" id="toast"><span id="toastText"></span></div>
+
+<!-- ============================== CONFIRM MODAL ============================== -->
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal-card">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmBody"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="confirmCancelBtn">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirmOkBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== FIREBASE SDK ============================== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+'use strict';
+
+/* ==========================================================================
+   1. CONFIGURATION
+   ========================================================================== */
+ const firebaseConfig = {
+  apiKey: "AIzaSyDWBFlmvdswKThEgvEQD6nRCjVd60Je0t0",
+  authDomain: "gen-lang-client-0038612233.firebaseapp.com",
+  databaseURL: "https://gen-lang-client-0038612233-default-rtdb.firebaseio.com",
+  projectId: "gen-lang-client-0038612233",
+  storageBucket: "gen-lang-client-0038612233.firebasestorage.app",
+  messagingSenderId: "692219421342",
+  appId: "1:692219421342:web:90be8f15e15e6a4a4e118f"
+};
+const DEFAULT_ACCESS_KEY = 'admin123'; // used only if settings/adminAccessKey has never been set — change this immediately
+
+const NAV_ITEMS = [
+  { id:'dashboard', label:'Dashboard', icon:iconGrid() },
+  { id:'apps', label:'Apps / Tools', icon:iconBox() },
+  { id:'categories', label:'Categories', icon:iconTag() },
+  { id:'banners', label:'Banners', icon:iconImage() },
+  { id:'ads', label:'Ads Control', icon:iconMegaphone() },
+  { id:'settings', label:'Settings', icon:iconGear() }
+];
+
+/* ==========================================================================
+   2. FIREBASE INITIALIZATION
+   ========================================================================== */
+let db = null, firebaseReady = false;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  firebaseReady = true;
+} catch(e){
+  console.error('Firebase init failed — replace the firebaseConfig placeholder values.', e);
+}
+
+/* ==========================================================================
+   3. APPLICATION STATE
+   ========================================================================== */
+const State = {
+  authenticated: false,
+  apps: [], categories: [], banners: [], settings: {}, ads: {},
+  currentPanel: 'dashboard',
+  editingAppId: null,
+  editingBannerId: null,
+  formPermissions: [],
+  formScreenshots: [''],
+  bannerDestType: 'app',
+  appsStatusFilter: '',
+  appsSearchTerm: ''
+};
+
+/* ==========================================================================
+   4. ADMIN AUTHENTICATION
+   ========================================================================== */
+const loginBtn = document.getElementById('loginBtn');
+const accessKeyInput = document.getElementById('accessKeyInput');
+loginBtn.addEventListener('click', attemptLogin);
+accessKeyInput.addEventListener('keydown', e => { if(e.key === 'Enter') attemptLogin(); });
+
+function attemptLogin(){
+  const entered = accessKeyInput.value;
+  if(!entered){ showLoginError('Please enter your Access Key.'); return; }
+  setLoginLoading(true);
+
+  if(!firebaseReady){
+    setLoginLoading(false);
+    showLoginError('Firebase is not configured yet — set firebaseConfig first.');
+    return;
+  }
+
+  db.ref('settings/adminAccessKey').once('value').then(snap => {
+    const stored = snap.val();
+    const expected = stored == null ? DEFAULT_ACCESS_KEY : stored;
+    setLoginLoading(false);
+    if(entered === expected){
+      if(stored == null){ db.ref('settings/adminAccessKey').set(DEFAULT_ACCESS_KEY); }
+      State.authenticated = true;
+      sessionStorage.setItem('mt_admin_session', '1');
+      enterAdmin();
+    } else {
+      showLoginError('Incorrect Access Key. Please try again.');
+    }
+  }).catch(() => {
+    setLoginLoading(false);
+    showLoginError('Could not reach the database. Check your connection.');
+  });
+}
+function setLoginLoading(loading){
+  loginBtn.disabled = loading;
+  document.getElementById('loginBtnLabel').innerHTML = loading ? '<span class="spinner"></span>' : 'Log in';
+}
+function showLoginError(msg){
+  const el = document.getElementById('loginErr');
+  el.textContent = msg; el.classList.add('show');
+}
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('mt_admin_session');
+  location.reload();
+});
+
+function enterAdmin(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminShell').classList.add('active');
+  buildNav();
+  bindDataListeners();
+  goto('dashboard');
+}
+
+// Note: this is a UI-level gate for admin convenience. Production deployments
+// must enforce real authorization via Firebase Realtime Database security rules
+// (see PRD §70) — client-side checks alone cannot secure the data.
+if(sessionStorage.getItem('mt_admin_session') === '1'){
+  State.authenticated = true;
+  enterAdmin();
+}
+
+/* ==========================================================================
+   5. NAVIGATION
+   ========================================================================== */
+function buildNav(){
+  const nav = document.getElementById('navList');
+  nav.innerHTML = '';
+  NAV_ITEMS.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-item' + (item.id === State.currentPanel ? ' active' : '');
+    btn.dataset.panel = item.id;
+    btn.innerHTML = `${item.icon}${item.label}`;
+    btn.addEventListener('click', () => goto(item.id));
+    nav.appendChild(btn);
+  });
+}
+document.querySelectorAll('[data-goto]').forEach(el => el.addEventListener('click', () => goto(el.dataset.goto)));
+document.getElementById('sidebarToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
+
+function goto(target){
+  const [panel, sub] = target.split('/');
+  State.currentPanel = panel;
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item[data-panel]').forEach(n => n.classList.toggle('active', n.dataset.panel === panel));
+  document.getElementById('sidebar').classList.remove('open');
+
+  if(panel === 'apps' && sub === 'new'){
+    openAppForm(null);
+    document.getElementById('panel-app-form').classList.add('active');
+    return;
+  }
+  if(panel === 'banners' && sub === 'new'){
+    openBannerForm(null);
+    document.getElementById('panel-banner-form').classList.add('active');
+    return;
+  }
+  const el = document.getElementById('panel-' + panel);
+  if(el) el.classList.add('active');
+
+  if(panel === 'dashboard') renderDashboard();
+  if(panel === 'apps') renderAppsTable();
+  if(panel === 'categories') renderCategoriesPanel();
+  if(panel === 'banners') renderBannersPanel();
+  if(panel === 'ads') renderAdsPanel();
+  if(panel === 'settings') renderSettingsPanel();
+}
+
+/* ==========================================================================
+   6. DATA LISTENERS
+   ========================================================================== */
+function bindDataListeners(){
+  if(!firebaseReady) return;
+  db.ref('apps').on('value', snap => {
+    const val = snap.val() || {};
+    State.apps = Object.entries(val).map(([id,a]) => ({id, ...a})).sort((a,b) => (b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
+    refreshCurrentPanel();
+  });
+  db.ref('categories').on('value', snap => {
+    const val = snap.val() || {};
+    State.categories = Object.entries(val).map(([id,c]) => ({id, ...c})).sort((a,b) => (a.order??0)-(b.order??0));
+    refreshCurrentPanel();
+  });
+  db.ref('banners').on('value', snap => {
+    const val = snap.val() || {};
+    State.banners = Object.entries(val).map(([id,b]) => ({id, ...b})).sort((a,b) => (a.order??0)-(b.order??0));
+    refreshCurrentPanel();
+  });
+  db.ref('settings').on('value', snap => { State.settings = snap.val() || {}; refreshCurrentPanel(); });
+  db.ref('ads').on('value', snap => { State.ads = snap.val() || {}; });
+}
+function refreshCurrentPanel(){
+  const p = State.currentPanel;
+  if(p === 'dashboard') renderDashboard();
+  if(p === 'apps') renderAppsTable();
+  if(p === 'categories') renderCategoriesPanel();
+  if(p === 'banners') renderBannersPanel();
+  if(p === 'settings') renderSettingsPanel();
+}
+
+/* ==========================================================================
+   7. DASHBOARD
+   ========================================================================== */
+function renderDashboard(){
+  const totalApps = State.apps.length;
+  const published = State.apps.filter(a => a.status === 'published');
+  const drafts = State.apps.filter(a => a.status === 'draft');
+  const totalDownloads = State.apps.reduce((s,a) => s + (Number(a.downloadCount)||0), 0);
+
+  document.getElementById('statGrid').innerHTML = [
+    ['Total Apps / Tools', totalApps],
+    ['Total Categories', State.categories.length],
+    ['Total Banners', State.banners.length],
+    ['Total Downloads', fmtNum(totalDownloads)],
+    ['Draft Apps', drafts.length]
+  ].map(([label,val]) => `<div class="stat-card"><div class="st-label">${label}</div><div class="st-value">${val}</div></div>`).join('');
+
+  renderMiniList('draftList', drafts.slice(0,6), a => `<a href="javascript:void(0)" onclick="openAppForm('${a.id}');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-app-form').classList.add('active');">${a.name||'Untitled'}</a>`, 'No drafts.');
+
+  const sortedByDownload = [...published].sort((a,b) => (b.downloadCount||0)-(a.downloadCount||0));
+  renderMiniList('mostDownloadedList', sortedByDownload.slice(0,5), a => `${a.name||'Untitled'}`, 'No published apps yet.', a => fmtNum(a.downloadCount||0));
+  renderMiniList('lowDownloadList', [...sortedByDownload].reverse().slice(0,5), a => `${a.name||'Untitled'}`, 'No published apps yet.', a => fmtNum(a.downloadCount||0));
+
+  const byCreated = [...State.apps].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+  const byUpdated = [...State.apps].sort((a,b) => (b.updatedAt||0)-(a.updatedAt||0));
+  renderMiniList('recentAddedList', byCreated.slice(0,6), a => a.name||'Untitled', 'Nothing added yet.', a => fmtDate(a.createdAt));
+  renderMiniList('recentUpdatedList', byUpdated.slice(0,6), a => a.name||'Untitled', 'No updates yet.', a => fmtDate(a.updatedAt));
+}
+function renderMiniList(containerId, items, labelFn, emptyMsg, metaFn){
+  const el = document.getElementById(containerId);
+  if(!items.length){ el.innerHTML = `<div class="empty-note">${emptyMsg}</div>`; return; }
+  el.innerHTML = items.map(a => `
+    <div class="list-row">
+      <div class="lr-main"><img src="${escAttr(a.logo||PLACEHOLDER)}" onerror="this.src='${PLACEHOLDER}'"><span class="lr-name">${labelFn(a)}</span></div>
+      ${metaFn ? `<span class="lr-meta">${metaFn(a)}</span>` : ''}
+    </div>`).join('');
+}
+
+/* ==========================================================================
+   8. APPS LIST / TABLE
+   ========================================================================== */
+document.querySelectorAll('#appsStatusFilter .pill-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    State.appsStatusFilter = btn.dataset.status;
+    document.querySelectorAll('#appsStatusFilter .pill-filter').forEach(b => b.classList.toggle('active', b===btn));
+    renderAppsTable();
+  });
+});
+let appsSearchDebounce;
+document.getElementById('appsSearchInput').addEventListener('input', e => {
+  clearTimeout(appsSearchDebounce);
+  appsSearchDebounce = setTimeout(() => { State.appsSearchTerm = e.target.value.toLowerCase(); renderAppsTable(); }, 200);
+});
+
+function renderAppsTable(){
+  let list = State.apps;
+  if(State.appsStatusFilter) list = list.filter(a => a.status === State.appsStatusFilter);
+  if(State.appsSearchTerm) list = list.filter(a => (a.name||'').toLowerCase().includes(State.appsSearchTerm) || (a.packageName||'').toLowerCase().includes(State.appsSearchTerm));
+
+  document.getElementById('appsCountSub').textContent = `${list.length} of ${State.apps.length} total`;
+  const body = document.getElementById('appsTableBody');
+  const empty = document.getElementById('appsEmptyPanel');
+
+  if(!list.length){ body.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  body.innerHTML = list.map(a => `
+    <tr>
+      <td><div class="name-cell"><img src="${escAttr(a.logo||PLACEHOLDER)}" onerror="this.src='${PLACEHOLDER}'"><span>${esc(a.name||'Untitled')}</span></div></td>
+      <td class="mono">${esc(a.versionName||a.versionCode||'—')}</td>
+      <td><span class="badge ${a.status==='published'?'published':'draft'}">${a.status||'draft'}</span></td>
+      <td class="mono">${fmtNum(a.downloadCount||0)}</td>
+      <td class="mono">${fmtDate(a.updatedAt||a.createdAt)}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" title="Edit" onclick="openAppForm('${a.id}');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-app-form').classList.add('active');">${iconEdit()}</button>
+        <button class="icon-btn danger" title="Delete" onclick="confirmDeleteApp('${a.id}','${escAttr(a.name||'this app')}')">${iconTrash()}</button>
+      </div></td>
+    </tr>`).join('');
+}
+function confirmDeleteApp(id, name){
+  openConfirm(`Delete "${name}"?`, 'This permanently removes the app and its statistics. This cannot be undone.', () => {
+    db.ref('apps/'+id).remove().then(() => showToast('App deleted.'));
+  });
+}
+
+/* ==========================================================================
+   9. APP FORM (add / edit / draft / publish)
+   ========================================================================== */
+function openAppForm(id){
+  State.editingAppId = id;
+  const app = id ? State.apps.find(a => a.id === id) : null;
+  document.getElementById('appFormTitle').textContent = app ? `Edit — ${app.name||'App'}` : 'Add App / Tool';
+
+  document.getElementById('f_name').value = app?.name || '';
+  document.getElementById('f_packageName').value = app?.packageName || '';
+  document.getElementById('f_versionCode').value = app?.versionCode || '';
+  document.getElementById('f_versionName').value = app?.versionName || '';
+  document.getElementById('f_logo').value = app?.logo || '';
+  document.getElementById('f_cover').value = app?.cover || '';
+  document.getElementById('f_downloadLink').value = app?.downloadLink || '';
+  document.getElementById('f_size').value = app?.size || '';
+  document.getElementById('f_androidVersion').value = app?.androidVersion || '';
+  document.getElementById('f_rating').value = app?.rating ?? '';
+  document.getElementById('f_downloadCount').value = app?.downloadCount ?? 0;
+  document.getElementById('f_description').value = app?.description || '';
+  document.getElementById('f_ads').checked = !!app?.ads;
+  document.getElementById('f_iap').checked = !!app?.inAppPurchases;
+  document.getElementById('adsLabel').textContent = app?.ads ? 'Yes' : 'No';
+  document.getElementById('iapLabel').textContent = app?.inAppPurchases ? 'Yes' : 'No';
+  document.getElementById('f_devTelegram').value = app?.developer?.telegram || '';
+  document.getElementById('f_devEmail').value = app?.developer?.email || '';
+  document.getElementById('f_devWebsite').value = app?.developer?.website || '';
+  document.getElementById('f_socFacebook').value = app?.social?.facebook || '';
+  document.getElementById('f_socTelegram').value = app?.social?.telegram || '';
+  document.getElementById('f_socYoutube').value = app?.social?.youtube || '';
+  document.getElementById('f_socInstagram').value = app?.social?.instagram || '';
+  document.getElementById('f_socWebsite').value = app?.social?.website || '';
+  document.getElementById('f_saveAsDefaultSocials').checked = false;
+  document.getElementById('f_seoTitle').value = app?.seoTitle || '';
+  document.getElementById('f_seoDescription').value = app?.seoDescription || '';
+  document.getElementById('f_keywords').value = Array.isArray(app?.keywords) ? app.keywords.join(', ') : (app?.keywords || '');
+
+  State.formScreenshots = Array.isArray(app?.screenshots) ? [...app.screenshots] : Object.values(app?.screenshots || {});
+  if(!State.formScreenshots.length) State.formScreenshots = [''];
+  renderScreenshotsList();
+
+  State.formPermissions = Array.isArray(app?.permissions) ? [...app.permissions] : Object.values(app?.permissions || {});
+  renderPermTags();
+
+  renderCategoryToggles(Array.isArray(app?.categories) ? app.categories : Object.values(app?.categories || {}));
+  clearFormErrors('appForm');
+}
+
+function renderScreenshotsList(){
+  const el = document.getElementById('screenshotsList');
+  el.innerHTML = State.formScreenshots.map((url, i) => `
+    <div class="repeat-row">
+      <input type="url" value="${escAttr(url)}" placeholder="https://…" data-idx="${i}" class="ss-input">
+      <button type="button" class="icon-btn danger" onclick="removeScreenshot(${i})">${iconTrash()}</button>
+    </div>`).join('');
+  el.querySelectorAll('.ss-input').forEach(inp => inp.addEventListener('input', e => {
+    State.formScreenshots[+e.target.dataset.idx] = e.target.value;
+  }));
+}
+document.getElementById('addScreenshotBtn').addEventListener('click', () => { State.formScreenshots.push(''); renderScreenshotsList(); });
+function removeScreenshot(i){ State.formScreenshots.splice(i,1); if(!State.formScreenshots.length) State.formScreenshots.push(''); renderScreenshotsList(); }
+
+function renderPermTags(){
+  document.getElementById('permTagRow').innerHTML = State.formPermissions.map((p,i) => `
+    <span class="perm-tag">${esc(p)}<button type="button" onclick="removePerm(${i})">${iconXSmall()}</button></span>`).join('') || '<span class="empty-note">No permissions added.</span>';
+}
+document.getElementById('addPermBtn').addEventListener('click', addPermFromInput);
+document.getElementById('permInput').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addPermFromInput(); } });
+function addPermFromInput(){
+  const inp = document.getElementById('permInput');
+  const v = inp.value.trim();
+  if(v && !State.formPermissions.includes(v)){ State.formPermissions.push(v); renderPermTags(); }
+  inp.value = '';
+}
+function removePerm(i){ State.formPermissions.splice(i,1); renderPermTags(); }
+
+function renderCategoryToggles(selected){
+  const row = document.getElementById('categoryToggleRow');
+  if(!State.categories.length){ row.innerHTML = '<span class="empty-note">No categories yet — create one first.</span>'; return; }
+  row.innerHTML = State.categories.map(c => `<button type="button" class="chip-toggle${(selected||[]).includes(c.id)?' active':''}" data-cid="${c.id}">${esc(c.name)}</button>`).join('');
+  row.querySelectorAll('.chip-toggle').forEach(btn => btn.addEventListener('click', () => btn.classList.toggle('active')));
+}
+
+document.getElementById('f_ads').addEventListener('change', e => document.getElementById('adsLabel').textContent = e.target.checked ? 'Yes' : 'No');
+document.getElementById('f_iap').addEventListener('change', e => document.getElementById('iapLabel').textContent = e.target.checked ? 'Yes' : 'No');
+document.getElementById('useDefaultSocialsBtn').addEventListener('click', () => {
+  const d = State.settings.defaultSocials || {};
+  document.getElementById('f_socFacebook').value = d.facebook || '';
+  document.getElementById('f_socTelegram').value = d.telegram || '';
+  document.getElementById('f_socYoutube').value = d.youtube || '';
+  document.getElementById('f_socInstagram').value = d.instagram || '';
+  document.getElementById('f_socWebsite').value = d.website || '';
+});
+
+function collectAppForm(){
+  return {
+    name: document.getElementById('f_name').value.trim(),
+    packageName: document.getElementById('f_packageName').value.trim(),
+    versionCode: document.getElementById('f_versionCode').value.trim(),
+    versionName: document.getElementById('f_versionName').value.trim(),
+    logo: document.getElementById('f_logo').value.trim(),
+    cover: document.getElementById('f_cover').value.trim(),
+    screenshots: State.formScreenshots.filter(Boolean),
+    downloadLink: document.getElementById('f_downloadLink').value.trim(),
+    size: document.getElementById('f_size').value.trim(),
+    androidVersion: document.getElementById('f_androidVersion').value.trim(),
+    categories: Array.from(document.querySelectorAll('#categoryToggleRow .chip-toggle.active')).map(b => b.dataset.cid),
+    rating: document.getElementById('f_rating').value === '' ? null : Number(document.getElementById('f_rating').value),
+    downloadCount: document.getElementById('f_downloadCount').value === '' ? 0 : Math.floor(Number(document.getElementById('f_downloadCount').value)),
+    description: document.getElementById('f_description').value,
+    permissions: State.formPermissions,
+    ads: document.getElementById('f_ads').checked,
+    inAppPurchases: document.getElementById('f_iap').checked,
+    developer: {
+      telegram: document.getElementById('f_devTelegram').value.trim(),
+      email: document.getElementById('f_devEmail').value.trim(),
+      website: document.getElementById('f_devWebsite').value.trim()
+    },
+    social: {
+      facebook: document.getElementById('f_socFacebook').value.trim(),
+      telegram: document.getElementById('f_socTelegram').value.trim(),
+      youtube: document.getElementById('f_socYoutube').value.trim(),
+      instagram: document.getElementById('f_socInstagram').value.trim(),
+      website: document.getElementById('f_socWebsite').value.trim()
+    },
+    seoTitle: document.getElementById('f_seoTitle').value.trim(),
+    seoDescription: document.getElementById('f_seoDescription').value.trim(),
+    keywords: document.getElementById('f_keywords').value.split(',').map(s => s.trim()).filter(Boolean)
+  };
+}
+
+function validateAppForm(data){
+  clearFormErrors('appForm');
+  let ok = true;
+  if(!data.name){ markInvalid('name'); ok = false; }
+  if(!data.logo || !isValidUrl(data.logo)){ markInvalid('logo'); ok = false; }
+  if(!data.downloadLink || !isValidUrl(data.downloadLink)){ markInvalid('downloadLink'); ok = false; }
+  if(data.rating !== null && (isNaN(data.rating) || data.rating < 0 || data.rating > 5)){ markInvalid('rating'); ok = false; }
+  if(isNaN(data.downloadCount) || data.downloadCount < 0){ markInvalid('downloadCount'); ok = false; }
+  return ok;
+}
+function markInvalid(fieldName){ document.querySelector(`#appForm [data-field="${fieldName}"]`)?.classList.add('invalid'); }
+function clearFormErrors(formId){ document.querySelectorAll(`#${formId} .field.invalid`).forEach(f => f.classList.remove('invalid')); }
+
+function saveApp(status){
+  const data = collectAppForm();
+  if(!validateAppForm(data)){ showToast('Please fix the highlighted fields.', true); return; }
+  data.status = status;
+  data.updatedAt = Date.now();
+
+  if(document.getElementById('f_saveAsDefaultSocials').checked){
+    db.ref('settings/defaultSocials').set(data.social);
+  }
+
+  if(State.editingAppId){
+    db.ref('apps/'+State.editingAppId).update(data).then(() => {
+      showToast(status === 'published' ? 'App published.' : 'Draft saved.');
+      goto('apps');
+    });
+  } else {
+    data.createdAt = Date.now();
+    data.clickCount = 0;
+    const ref = db.ref('apps').push();
+    ref.set(data).then(() => {
+      showToast(status === 'published' ? 'App published.' : 'Draft saved.');
+      goto('apps');
+    });
+  }
+}
+document.getElementById('saveDraftBtn').addEventListener('click', () => saveApp('draft'));
+document.getElementById('publishBtn').addEventListener('click', () => saveApp('published'));
+
+/* ==========================================================================
+   10. CATEGORIES
+   ========================================================================== */
+document.getElementById('addCategoryBtn').addEventListener('click', () => {
+  const inp = document.getElementById('newCategoryInput');
+  const name = inp.value.trim();
+  if(!name) return;
+  const order = State.categories.length;
+  db.ref('categories').push({ name, order, createdAt: Date.now() }).then(() => {
+    inp.value = '';
+    showToast('Category created.');
+  });
+});
+
+function renderCategoriesPanel(){
+  const list = document.getElementById('categoryReorderList');
+  const empty = document.getElementById('categoriesEmptyPanel');
+  if(!State.categories.length){ list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = State.categories.map(c => `
+    <div class="reorder-item" draggable="true" data-id="${c.id}">
+      <span class="drag-handle">${iconDrag()}</span>
+      <div class="ri-main"><div class="ri-title">${esc(c.name)}</div><div class="ri-sub">${State.apps.filter(a => (a.categories||[]).includes(c.id)).length} tools</div></div>
+      <div class="row-actions">
+        <button class="icon-btn" onclick="renameCategory('${c.id}','${escAttr(c.name)}')">${iconEdit()}</button>
+        <button class="icon-btn danger" onclick="confirmDeleteCategory('${c.id}','${escAttr(c.name)}')">${iconTrash()}</button>
+      </div>
+    </div>`).join('');
+  wireDragReorder(list, State.categories, 'categories');
+}
+function renameCategory(id, current){
+  const name = prompt('Rename category', current);
+  if(name && name.trim()) db.ref('categories/'+id+'/name').set(name.trim()).then(() => showToast('Category updated.'));
+}
+function confirmDeleteCategory(id, name){
+  openConfirm(`Delete "${name}"?`, 'Apps using this category will keep the reference but it will no longer resolve.', () => {
+    db.ref('categories/'+id).remove().then(() => showToast('Category deleted.'));
+  });
+}
+
+/* ==========================================================================
+   11. BANNERS
+   ========================================================================== */
+function renderBannersPanel(){
+  const list = document.getElementById('bannerReorderList');
+  const empty = document.getElementById('bannersEmptyPanel');
+  if(!State.banners.length){ list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = State.banners.map(b => `
+    <div class="reorder-item" draggable="true" data-id="${b.id}">
+      <span class="drag-handle">${iconDrag()}</span>
+      <img src="${escAttr(b.image||PLACEHOLDER)}" onerror="this.src='${PLACEHOLDER}'">
+      <div class="ri-main"><div class="ri-title">${esc(b.shortDetails || b.buttonText || 'Banner')}</div><div class="ri-sub">${b.destinationType || 'external'}${b.active ? '' : ' · inactive'}</div></div>
+      <div class="row-actions">
+        <label class="switch" title="Active"><input type="checkbox" ${b.active?'checked':''} onchange="toggleBannerActive('${b.id}', this.checked)"><span class="track"></span></label>
+        <button class="icon-btn" onclick="openBannerForm('${b.id}');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-banner-form').classList.add('active');">${iconEdit()}</button>
+        <button class="icon-btn danger" onclick="confirmDeleteBanner('${b.id}')">${iconTrash()}</button>
+      </div>
+    </div>`).join('');
+  wireDragReorder(list, State.banners, 'banners');
+}
+function toggleBannerActive(id, val){ db.ref('banners/'+id+'/active').set(val); }
+function confirmDeleteBanner(id){
+  openConfirm('Delete this banner?', 'This removes it from the homepage slider permanently.', () => {
+    db.ref('banners/'+id).remove().then(() => showToast('Banner deleted.'));
+  });
+}
+
+function openBannerForm(id){
+  State.editingBannerId = id;
+  const b = id ? State.banners.find(x => x.id === id) : null;
+  document.getElementById('bannerFormTitle').textContent = b ? 'Edit Banner' : 'Add Banner';
+  document.getElementById('b_image').value = b?.image || '';
+  document.getElementById('b_buttonText').value = b?.buttonText || '';
+  document.getElementById('b_shortDetails').value = b?.shortDetails || '';
+  document.getElementById('b_externalUrl').value = b?.externalUrl || '';
+  document.getElementById('b_active').checked = b ? !!b.active : true;
+  document.getElementById('bannerActiveLabel').textContent = (b ? !!b.active : true) ? 'Active' : 'Inactive';
+
+  populateBannerSelects();
+  document.getElementById('b_appId').value = b?.appId || '';
+  document.getElementById('b_categoryId').value = b?.categoryId || '';
+
+  State.bannerDestType = b?.destinationType || 'app';
+  setBannerDestType(State.bannerDestType);
+  clearFormErrors('bannerForm');
+}
+function populateBannerSelects(){
+  document.getElementById('b_appId').innerHTML = State.apps.map(a => `<option value="${a.id}">${esc(a.name||'Untitled')}</option>`).join('') || '<option value="">No apps yet</option>';
+  document.getElementById('b_categoryId').innerHTML = State.categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('') || '<option value="">No categories yet</option>';
+}
+document.querySelectorAll('#panel-banner-form [data-dest]').forEach(btn => {
+  btn.addEventListener('click', () => setBannerDestType(btn.dataset.dest));
+});
+function setBannerDestType(type){
+  State.bannerDestType = type;
+  document.querySelectorAll('#panel-banner-form [data-dest]').forEach(b => b.classList.toggle('active', b.dataset.dest === type));
+  document.getElementById('destAppField').style.display = type === 'app' ? 'block' : 'none';
+  document.getElementById('destCategoryField').style.display = type === 'category' ? 'block' : 'none';
+  document.getElementById('destExternalField').style.display = type === 'external' ? 'block' : 'none';
+}
+document.getElementById('b_active').addEventListener('change', e => document.getElementById('bannerActiveLabel').textContent = e.target.checked ? 'Active' : 'Inactive');
+
+document.getElementById('saveBannerBtn').addEventListener('click', () => {
+  const image = document.getElementById('b_image').value.trim();
+  clearFormErrors('bannerForm');
+  if(!image || !isValidUrl(image)){ markBannerInvalid(); showToast('Please fix the highlighted fields.', true); return; }
+
+  const data = {
+    image,
+    buttonText: document.getElementById('b_buttonText').value.trim(),
+    shortDetails: document.getElementById('b_shortDetails').value.trim(),
+    destinationType: State.bannerDestType,
+    appId: State.bannerDestType === 'app' ? document.getElementById('b_appId').value : null,
+    categoryId: State.bannerDestType === 'category' ? document.getElementById('b_categoryId').value : null,
+    externalUrl: State.bannerDestType === 'external' ? document.getElementById('b_externalUrl').value.trim() : null,
+    active: document.getElementById('b_active').checked,
+    updatedAt: Date.now()
+  };
+
+  if(State.editingBannerId){
+    db.ref('banners/'+State.editingBannerId).update(data).then(() => { showToast('Banner saved.'); goto('banners'); });
+  } else {
+    data.order = State.banners.length;
+    data.createdAt = Date.now();
+    db.ref('banners').push(data).then(() => { showToast('Banner saved.'); goto('banners'); });
+  }
+});
+function markBannerInvalid(){ document.querySelector('#bannerForm [data-field="image"]').classList.add('invalid'); }
+
+/* ==========================================================================
+   12. DRAG-TO-REORDER (categories & banners)
+   ========================================================================== */
+function wireDragReorder(listEl, items, dbPath){
+  let dragEl = null;
+  listEl.querySelectorAll('.reorder-item').forEach(item => {
+    item.addEventListener('dragstart', () => { dragEl = item; item.classList.add('dragging'); });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      const ids = Array.from(listEl.children).map(el => el.dataset.id);
+      const updates = {};
+      ids.forEach((id, idx) => updates[`${dbPath}/${id}/order`] = idx);
+      db.ref().update(updates);
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      const after = getDragAfterElement(listEl, e.clientY);
+      if(after == null) listEl.appendChild(dragEl); else listEl.insertBefore(dragEl, after);
+    });
+  });
+}
+function getDragAfterElement(container, y){
+  const els = [...container.querySelectorAll('.reorder-item:not(.dragging)')];
+  return els.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height/2;
+    return (offset < 0 && offset > closest.offset) ? {offset, element:child} : closest;
+  }, {offset:-Infinity}).element;
+}
+
+/* ==========================================================================
+   13. ADS CONTROL
+   ========================================================================== */
+function renderAdsPanel(){
+  document.getElementById('ad_home').checked = !!State.ads.home;
+  document.getElementById('ad_details').checked = !!State.ads.details;
+  document.getElementById('ad_download').checked = !!State.ads.download;
+  document.getElementById('ad_notes').value = State.ads.notes || '';
+  document.getElementById('adHomeLabel').textContent = State.ads.home ? 'On' : 'Off';
+  document.getElementById('adDetailsLabel').textContent = State.ads.details ? 'On' : 'Off';
+  document.getElementById('adDownloadLabel').textContent = State.ads.download ? 'On' : 'Off';
+}
+['ad_home','ad_details','ad_download'].forEach(id => {
+  document.getElementById(id).addEventListener('change', e => {
+    const labelId = 'ad'+id.split('_')[1][0].toUpperCase()+id.split('_')[1].slice(1)+'Label';
+    document.getElementById(labelId).textContent = e.target.checked ? 'On' : 'Off';
+  });
+});
+document.getElementById('saveAdsBtn').addEventListener('click', () => {
+  db.ref('ads').set({
+    home: document.getElementById('ad_home').checked,
+    details: document.getElementById('ad_details').checked,
+    download: document.getElementById('ad_download').checked,
+    notes: document.getElementById('ad_notes').value
+  }).then(() => showToast('Ads settings saved.'));
+});
+
+/* ==========================================================================
+   14. SETTINGS / ACCESS KEY / BACKUP
+   ========================================================================== */
+function renderSettingsPanel(){
+  document.getElementById('s_siteName').value = State.settings.siteName || '';
+  document.getElementById('s_logoUrl').value = State.settings.logoUrl || '';
+  document.getElementById('s_currentKeyView').value = State.settings.adminAccessKey || DEFAULT_ACCESS_KEY;
+}
+document.getElementById('saveSiteSettingsBtn').addEventListener('click', () => {
+  db.ref('settings').update({
+    siteName: document.getElementById('s_siteName').value.trim(),
+    logoUrl: document.getElementById('s_logoUrl').value.trim()
+  }).then(() => showToast('Site settings saved.'));
+});
+document.getElementById('toggleKeyVisBtn').addEventListener('click', e => {
+  const input = document.getElementById('s_currentKeyView');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  e.target.textContent = show ? 'Hide' : 'Show';
+});
+document.getElementById('changeKeyBtn').addEventListener('click', () => {
+  const newKey = document.getElementById('s_newKey').value.trim();
+  if(!newKey || newKey.length < 4){ showToast('Access Key must be at least 4 characters.', true); return; }
+  db.ref('settings/adminAccessKey').set(newKey).then(() => {
+    showToast('Access Key changed.');
+    document.getElementById('s_newKey').value = '';
+    renderSettingsPanel();
+  });
+});
+
+document.getElementById('exportBackupBtn').addEventListener('click', () => {
+  const backup = { exportedAt: Date.now(), apps: State.apps, categories: State.categories, banners: State.banners, settings: State.settings, ads: State.ads };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `modder-tools-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast('Backup exported.');
+});
+document.getElementById('importBackupInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const status = document.getElementById('backupStatus');
+  status.textContent = 'Reading backup file…';
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      openConfirm('Import this backup?', 'This will merge apps, categories and banners from the file into your database. Existing items with the same ID will be overwritten.', () => {
+        const updates = {};
+        const arrToObj = (arr, key) => { const o = {}; (arr||[]).forEach(item => { const {id, ...rest} = item; o[id || db.ref(key).push().key] = rest; }); return o; };
+        if(data.apps) updates.apps = arrToObj(data.apps, 'apps');
+        if(data.categories) updates.categories = arrToObj(data.categories, 'categories');
+        if(data.banners) updates.banners = arrToObj(data.banners, 'banners');
+        if(data.settings) updates.settings = data.settings;
+        if(data.ads) updates.ads = data.ads;
+        db.ref().update(updates).then(() => {
+          status.textContent = 'Backup imported successfully.';
+          showToast('Backup imported.');
+        }).catch(err => { status.textContent = 'Import failed: ' + err.message; });
+      });
+    } catch(err){
+      status.textContent = 'Invalid backup file.';
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ==========================================================================
+   15. TOAST / CONFIRM MODAL
+   ========================================================================== */
+let toastTimer;
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  t.classList.toggle('danger', !!isError);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+let confirmCallback = null;
+function openConfirm(title, body, onOk){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmBody').textContent = body;
+  confirmCallback = onOk;
+  document.getElementById('confirmModal').classList.add('show');
+}
+document.getElementById('confirmCancelBtn').addEventListener('click', () => document.getElementById('confirmModal').classList.remove('show'));
+document.getElementById('confirmOkBtn').addEventListener('click', () => {
+  document.getElementById('confirmModal').classList.remove('show');
+  if(confirmCallback) confirmCallback();
+});
+
+/* ==========================================================================
+   16. HELPERS / ICONS
+   ========================================================================== */
+const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60"><rect width="60" height="60" fill="%23FAFAF9"/></svg>');
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escAttr(s){ return esc(s); }
+function fmtNum(n){ n = Number(n)||0; return n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n); }
+function fmtDate(ts){ if(!ts) return '—'; try{ return new Date(ts).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); }catch(e){ return '—'; } }
+function isValidUrl(s){ try{ new URL(s); return true; }catch(e){ return false; } }
+
+function iconGrid(){ return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`; }
+function iconBox(){ return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 8-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`; }
+function iconTag(){ return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 12 12 20.6a2 2 0 0 1-2.8 0l-6.8-6.8a2 2 0 0 1 0-2.8L11 2.4a2 2 0 0 1 1.4-.6H19a2 2 0 0 1 2 2v6.6a2 2 0 0 1-.4 1.2z"/><circle cx="15.5" cy="7.5" r="1.5"/></svg>`; }
+function iconImage(){ return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 15-5-5-9 9"/></svg>`; }
+function iconMegaphone(){ return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 0 0 1 1h2l3.3 4.5a1 1 0 0 0 1.7-.8V7.3a1 1 0 0 0-1.7-.8L6 11H4a1 1 0 0 0-1 1z"/><path d="M17 8a5 5 0 0 1 0 8"/><path d="M20 5a9 9 0 0 1 0 14"/></svg>`; }
+function iconGear(){ return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`; }
+function iconEdit(){ return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`; }
+function iconTrash(){ return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`; }
+function iconDrag(){ return `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.4"/><circle cx="8" cy="12" r="1.4"/><circle cx="8" cy="18" r="1.4"/><circle cx="16" cy="6" r="1.4"/><circle cx="16" cy="12" r="1.4"/><circle cx="16" cy="18" r="1.4"/></svg>`; }
+function iconXSmall(){ return `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`; }
+
+if(!firebaseReady){
+  console.warn('Modder Tools Admin: Firebase is not configured yet. Replace firebaseConfig with your project credentials.');
+}
+</script>
+</body>
+</html>
