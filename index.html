@@ -8,7 +8,16 @@
 <meta property="og:title" content="Modder Tools">
 <meta property="og:description" content="A centralized place where modders can find the tools they need.">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Modder Tools">
+<meta property="og:image" content="favicon.ico">
+<meta property="og:url" content="https://moddertools.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Modder Tools">
+<meta name="twitter:description" content="A centralized directory of apps and tools for Android modders.">
+<meta name="twitter:image" content="favicon.ico">
 <meta name="robots" content="index, follow">
+<link rel="icon" href="favicon.ico" type="image/ico">
+<link rel="apple-touch-icon" href="favicon.ico">
 <link rel="canonical" id="canonicalLink" href="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,8 +172,8 @@ h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:-.01em;}
 .grid-heading .count{font-size:12.5px; color:var(--ink-faint); font-family:var(--font-mono);}
 
 .app-grid{
-  display:grid; gap:14px;
-  grid-template-columns:repeat(3, 1fr);
+  display:grid; gap:12px;
+  grid-template-columns:repeat(4, 1fr);
 }
 @media (min-width:640px){ .app-grid{grid-template-columns:repeat(5,1fr);} }
 @media (min-width:900px){ .app-grid{grid-template-columns:repeat(6,1fr);} }
@@ -172,29 +181,21 @@ h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:-.01em;}
 
 .app-card{
   background:#fff; border:1px solid var(--line-soft); border-radius:var(--radius-md);
-  padding:10px; box-shadow:var(--shadow-sm); transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
+  padding:11px; box-shadow:var(--shadow-sm); transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
   display:flex; flex-direction:column; gap:8px;
-  aspect-ratio:.86/1;
 }
 .app-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:var(--line);}
 .app-card .thumb{
-  aspect-ratio:1/1; width:100%; border-radius:12px; overflow:hidden; background:var(--surface);
-  border:1px solid var(--line-soft); position:relative; flex-shrink:0;
+  aspect-ratio:1/1; border-radius:12px; overflow:hidden; background:var(--surface);
+  border:1px solid var(--line-soft); position:relative;
 }
-.app-card .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+.app-card .thumb img{width:100%; height:100%; object-fit:cover;}
 .app-card .name{font-size:12.8px; font-weight:600; line-height:1.28; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
-.app-card .meta{font-size:10.5px; color:var(--ink-faint); font-family:var(--font-mono); margin-top:auto;}
-@media (max-width:639px){
-  .app-grid{gap:10px;}
-  .app-card{padding:8px; border-radius:14px; gap:6px;}
-  .app-card .thumb{border-radius:11px;}
-  .app-card .name{font-size:12px;}
-  .app-card .meta{font-size:10px;}
-}
+.app-card .meta{font-size:10.5px; color:var(--ink-faint); font-family:var(--font-mono);}
 
 .grid-skeleton{background:linear-gradient(100deg, var(--surface) 30%, #f0efec 45%, var(--surface) 60%); background-size:200% 100%; animation:shimmer 1.4s infinite;}
 @keyframes shimmer{0%{background-position:150% 0;} 100%{background-position:-50% 0;}}
-.skeleton-card{border-radius:var(--radius-md); aspect-ratio:.86/1;}
+.skeleton-card{border-radius:var(--radius-md); aspect-ratio:.82/1;}
 
 .sentinel{height:1px;}
 .load-more-state{display:flex; justify-content:center; padding:26px 0; color:var(--ink-faint); font-size:13px;}
@@ -399,7 +400,7 @@ h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:-.01em;}
 <header class="site-header">
   <div class="wrap header-row">
     <a href="#/home" class="logo" data-route="home" aria-label="Modder Tools home">
-      <img src="https://i.ibb.co/bRQJZs5y/1000150089.png" alt="Modder Tools" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <img src="favicon.ico" alt="Modder Tools" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
       <span class="logo-fallback" style="display:none;">Modder<span class="dot">Tools</span></span>
     </a>
     <div class="search-shell">
@@ -416,6 +417,7 @@ h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:-.01em;}
   <!-- ============================== HOME VIEW ============================== -->
   <section id="view-home" class="view active">
     <div class="wrap">
+      <h1 class="visually-hidden">Modder Tools — Directory of Android Modding Apps &amp; Tools</h1>
       <nav class="categories" aria-label="Categories">
         <div class="chip-row" id="chipRow">
           <button class="chip active" data-cat="">All</button>
