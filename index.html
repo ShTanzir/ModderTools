@@ -172,26 +172,33 @@ h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:-.01em;}
 .grid-heading .count{font-size:12.5px; color:var(--ink-faint); font-family:var(--font-mono);}
 
 .app-grid{
-  display:grid; gap:12px;
-  grid-template-columns:repeat(4, 1fr);
+  display:grid; gap:10px;
+  grid-template-columns:repeat(3, 1fr);
 }
-@media (min-width:640px){ .app-grid{grid-template-columns:repeat(5,1fr);} }
+@media (min-width:640px){ .app-grid{grid-template-columns:repeat(5,1fr); gap:12px;} }
 @media (min-width:900px){ .app-grid{grid-template-columns:repeat(6,1fr);} }
 @media (min-width:1120px){ .app-grid{grid-template-columns:repeat(8,1fr);} }
 
 .app-card{
   background:#fff; border:1px solid var(--line-soft); border-radius:var(--radius-md);
-  padding:11px; box-shadow:var(--shadow-sm); transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
-  display:flex; flex-direction:column; gap:8px;
+  padding:9px; box-shadow:var(--shadow-sm); transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
+  display:flex; flex-direction:column; gap:7px; min-width:0;
 }
 .app-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:var(--line);}
 .app-card .thumb{
-  aspect-ratio:1/1; border-radius:12px; overflow:hidden; background:var(--surface);
+  aspect-ratio:1/1; width:100%; border-radius:12px; overflow:hidden; background:var(--surface);
   border:1px solid var(--line-soft); position:relative;
 }
-.app-card .thumb img{width:100%; height:100%; object-fit:cover;}
-.app-card .name{font-size:12.8px; font-weight:600; line-height:1.28; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
-.app-card .meta{font-size:10.5px; color:var(--ink-faint); font-family:var(--font-mono);}
+.app-card .thumb img{width:100%; height:100%; object-fit:cover; aspect-ratio:1/1;}
+.app-card .name{font-size:12.3px; font-weight:600; line-height:1.28; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; word-break:break-word;}
+.app-card .meta{font-size:10px; color:var(--ink-faint); font-family:var(--font-mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+@media (max-width:380px){
+  .app-card{padding:7px; border-radius:12px; gap:6px;}
+  .app-card .thumb{border-radius:10px;}
+  .app-card .name{font-size:11.5px;}
+  .app-card .meta{font-size:9.5px;}
+}
 
 .grid-skeleton{background:linear-gradient(100deg, var(--surface) 30%, #f0efec 45%, var(--surface) 60%); background-size:200% 100%; animation:shimmer 1.4s infinite;}
 @keyframes shimmer{0%{background-position:150% 0;} 100%{background-position:-50% 0;}}
@@ -308,6 +315,33 @@ h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:-.01em;}
 }
 .social-icon{width:42px; height:42px; padding:0; justify-content:center; border-radius:12px;}
 .contact-chip:hover, .social-icon:hover{border-color:var(--accent); transform:translateY(-2px);}
+
+/* Mobile-only layout fixes for the App Details page — desktop rules above are untouched */
+@media (max-width:640px){
+  .details-shell{padding-bottom:40px;}
+  .cover-wrap{aspect-ratio:16/9; margin-top:14px; border-radius:var(--radius-md);}
+  .identity-row{flex-wrap:wrap; margin-top:-30px; gap:10px 12px; padding:0 2px;}
+  .identity-logo{width:64px; height:64px; border-radius:15px; border-width:2.5px;}
+  .identity-main{padding-top:26px; flex:1 1 auto;}
+  .identity-main h1{font-size:18px; line-height:1.25;}
+  .identity-main .pkg{font-size:10.5px; word-break:break-all;}
+  .btn-download{flex:1 1 100%; order:3; justify-content:center; margin-top:2px; padding:12px 18px; align-self:auto;}
+
+  .stat-blocks{grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px;}
+  .stat-block{flex-direction:column; align-items:flex-start; padding:11px 10px; gap:6px;}
+  .stat-block .s-icon{width:30px; height:30px;}
+  .stat-block .s-value{font-size:12px; word-break:break-word;}
+  .stat-block .s-label{font-size:9.5px;}
+
+  .dl-share-row{flex-wrap:wrap; gap:10px; padding:12px 14px;}
+  .dl-count{font-size:12.5px;}
+
+  .section-block{margin-top:26px;}
+  .section-block h2{font-size:15px;}
+  .gallery-grid{grid-template-columns:repeat(2,1fr); gap:8px;}
+  .info-list{grid-template-columns:repeat(2,1fr);}
+  .addl-pill{min-width:0; flex:1 1 45%;}
+}
 
 /* ==========================================================================
    SHARE OVERLAY / LIGHTBOX (shared modal shell)
